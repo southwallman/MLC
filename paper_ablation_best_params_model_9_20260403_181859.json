@@ -1,0 +1,19 @@
+{
+    "mhcsra_csra_num_heads": 8,
+    "mhcsra_csra_lam": 0.30000000000000004,
+    "mhcsra_csra_fusion_method": "concat",
+    "mhcsra_csra_use_residual": true,
+    "acfp_mode": "adaptive",
+    "acfp_target_seq_len": 49,
+    "acfp_use_residual": true,
+    "mmaef_num_heads": 8,
+    "mmaef_ffn_hidden_ratio": 8.0,
+    "mmaef_use_dropout": true,
+    "mmaef_dropout_rate": 0.3,
+    "hybrid_intermediate_dim": 384,
+    "hybrid_dropout_rate": 0.25,
+    "hybrid_activation": "relu",
+    "hybrid_alpha_init": 0.65,
+    "max_iterations": 6,
+    "learning_rate": 1.629174531729188e-05
+}
