@@ -426,12 +426,13 @@ def config_mode3():
     - 输出：tonguedx_test/
     """
     test_data_path = "../dataset/test_data_juzhong.pth"
-    run_tag_402 = "20260402_200311"
+
+    run_tag_402 = "20260408_182017"
     max_trials_per_model = 10
     output_dir = "tonguedx_test"
     model_configs = []
 
-    for i in range(2, 11):
+    for i in range(1, 11):
         variant = f"model_{i}"
         trial_dir = f"optuna_trial_records_paper_{variant}_{run_tag_402}"
         if not os.path.isdir(trial_dir):
