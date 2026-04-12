@@ -1,0 +1,15 @@
+{
+    "mhcsra_csra_lam": 1.0,
+    "mhcsra_csra_fusion_method": "attention",
+    "mhcsra_csra_use_residual": true,
+    "acfp_mode": "keep",
+    "acfp_use_residual": false,
+    "mmaef_ffn_hidden_ratio": 3.0,
+    "mmaef_use_dropout": true,
+    "mmaef_dropout_rate": 0.2,
+    "hybrid_dropout_rate": 0.15000000000000002,
+    "hybrid_activation": "relu",
+    "hybrid_alpha_init": 0.25,
+    "max_iterations": 5,
+    "learning_rate": 1.7721540632483133e-05
+}
