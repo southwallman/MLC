@@ -30,7 +30,7 @@ ITDDlabel=[
 # ==============================================================================
 # 🚨 全局标签配置 (一处修改，全局生效)
 # ==============================================================================
-GLOBAL_LABELS = tonguedxlabel
+GLOBAL_LABELS = ITDDlabel
 GLOBAL_NUM_CLASSES = len(GLOBAL_LABELS)
 
 
@@ -457,7 +457,7 @@ def config_mode3():
     return model_configs, test_data_path
 
 def config():
-    RUN_MODE = "mode3"  # 当前直接跑 100 次批量测试
+    RUN_MODE = "mode2"  # 当前直接跑 100 次批量测试
     if RUN_MODE == "mode1": return config_mode1()
     if RUN_MODE == "mode2": return config_mode2()
     if RUN_MODE == "mode3": return config_mode3()
