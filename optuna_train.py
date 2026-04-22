@@ -20,7 +20,7 @@ import csv
 import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.gridspec as gridspec
-
+from tonguedx_MLC.our_version7.消融backbone import get_backbone_ablation_model
 # 设置中文字体（Windows系统）
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei']
 plt.rcParams['axes.unicode_minus'] = False
@@ -52,10 +52,21 @@ FIXED_SEQ_LEN = 144
 # ==============================================================================
 # 🚨 参数清洗器 (兼容 Optuna 旧前缀) 🚨
 # ==============================================================================
-def _build_safe_config(params: dict, batch_size: int, device: str) -> ModelHyperParams:
+# ==============================================================================
+# 🚨 参数清洗器 (兼容 Optuna 旧前缀) 🚨
+# ==============================================================================
+def _build_safe_config(params: dict, batch_size: int, device: str, num_classes: int = None) -> ModelHyperParams:
     """安全地从字典构建配置，自动过滤或重命名 Optuna 的旧前缀"""
     cleaned = {}
-    for k, v in params.items():
+    raw_params = dict(params)
+
+    # 提前把可能导致冲突的 key 踢掉
+    raw_params.pop("num_classes", None)
+    raw_params.pop("batch_size", None)
+    raw_params.pop("device", None)
+    raw_params.pop("learning_rate", None)
+
+    for k, v in raw_params.items():
         if k.startswith("mhcsra_csra_"):
             cleaned[k.replace("mhcsra_csra_", "mhcsra_")] = v
         else:
@@ -68,8 +79,11 @@ def _build_safe_config(params: dict, batch_size: int, device: str) -> ModelHyper
         if "mhcsra_out_channel" not in cleaned:
             cleaned["mhcsra_out_channel"] = 2048
 
+    # 动态切换分类数：Mode 5 传了就用传的，其他模式没传就用全局
+    final_num_classes = num_classes if num_classes is not None else GLOBAL_NUM_CLASSES
+
     cfg = ModelHyperParams(
-        num_classes=GLOBAL_NUM_CLASSES,
+        num_classes=final_num_classes,
         batch_size=batch_size,
         device=device,
         **cleaned
@@ -77,7 +91,6 @@ def _build_safe_config(params: dict, batch_size: int, device: str) -> ModelHyper
     # 兼容 acfp_in_channels
     cfg.acfp_in_channels = int(getattr(cfg, "mhcsra_csra_output_dim", getattr(cfg, "mhcsra_out_channel", 2048)))
     return cfg
-
 
 # 选择模型
 MODEL_VARIANT = "exp6"
@@ -403,6 +416,193 @@ def train_paper_model10_and_ours_from_json(
         })
     return results
 
+
+import traceback  # 引入追踪库，报错不迷路
+
+
+def run_backbone_optuna_then_train(
+        *,
+        n_trials: int = PAPER_MODE3_N_TRIALS,
+        optuna_epochs: int = PAPER_MODE3_OPTUNA_EPOCHS,
+        full_epochs: int = PAPER_ABLATION_EPOCHS,
+) -> List[Dict[str, Any]]:
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    search_space = str(MHCSRA_SEARCH_SPACE).lower()  # 提取搜索空间
+    # backbones = ["resnet101", "resnet50", "resnet34", "densenet121", "vgg16", "googlenet"]
+    backbones = ["resnet101"]
+    all_results: List[Dict[str, Any]] = []
+
+    DATASETS_CONFIG = {
+        "TongueDx": {
+            "train_pth": "../dataset/train_data_juzhong.pth",
+            "test_pth": "../dataset/test_data_juzhong.pth",
+            "labels": tonguedxlabel
+        },
+        "ITDD": {
+            "train_pth": "../dataset/shezhenv3_train_data.pth",
+            "test_pth": "../dataset/shezhenv3_test_data.pth",
+            "labels": ITDDlabel
+        }
+    }
+
+    print("\n" + "=" * 80, flush=True)
+    print(f"[Mode 5] 开始双数据集骨干网络消融：先 Optuna 搜索 ({n_trials} trials)，后完整训练 ({full_epochs} epochs)",
+          flush=True)
+
+    for dataset_name, ds_info in DATASETS_CONFIG.items():
+        current_train_pth = ds_info["train_pth"]
+        current_test_pth = ds_info["test_pth"]
+        current_labels = ds_info["labels"]
+        curr_n_cls = len(current_labels)
+
+        print(f"\n🚀 >>> 切换至数据集: {dataset_name} (类别: {curr_n_cls}) <<<")
+
+        # 🚀 提取公共的配置构造器，确保 trial 和 best_params 都能打上固定补丁
+        def _get_full_params_dict(base_params: dict) -> dict:
+            full_params = dict(base_params)
+            # 🚨 强行注入所有锁死的参数，绝不侧漏
+            full_params.update({
+                "acfp_target_seq_len": FIXED_SEQ_LEN,
+                "mmaef_num_heads": FIXED_NUM_HEADS,
+                "hybrid_intermediate_dim": 256,
+            })
+            if search_space == "csra":
+                full_params.update({
+                    "mhcsra_input_dim": FIXED_FEATURE_DIM,
+                    "mhcsra_out_channel": FIXED_FEATURE_DIM,
+                    "mhcsra_num_heads": FIXED_NUM_HEADS,
+                })
+            else:
+                full_params.update({
+                    "mhcsra_num_heads": FIXED_NUM_HEADS,
+                    "mhcsra_feature_dim": FIXED_FEATURE_DIM,
+                    "mhcsra_out_channel": FIXED_FEATURE_DIM,
+                    "mhcsra_use_shallow": True,
+                })
+            return full_params
+
+        for variant in backbones:
+            print(f"\n{'-' * 20} Backbone: {variant} {'-' * 20}")
+            trial_dir = f"optuna_trial_records_backbone_{dataset_name}_{variant}_{RUN_TAG}"
+            os.makedirs(trial_dir, exist_ok=True)
+
+            def objective_backbone(trial: optuna.Trial) -> float:
+                # 1. 构建搜参字典
+                trial_params = {
+                    "acfp_mode": trial.suggest_categorical("acfp_mode", ['adaptive', 'keep']),
+                    "acfp_use_residual": trial.suggest_categorical("acfp_use_residual", [True, False]),
+                    "mmaef_ffn_hidden_ratio": trial.suggest_float("mmaef_ffn_hidden_ratio", 2.0, 8.0, step=1.0),
+                    "mmaef_use_dropout": trial.suggest_categorical("mmaef_use_dropout", [True, False]),
+                    "mmaef_dropout_rate": trial.suggest_float("mmaef_dropout_rate", 0.0, 0.3, step=0.05),
+                    "hybrid_dropout_rate": trial.suggest_float("hybrid_dropout_rate", 0.0, 0.3, step=0.05),
+                    "hybrid_activation": trial.suggest_categorical("hybrid_activation", ['relu', 'gelu', 'leaky_relu']),
+                    "hybrid_alpha_init": trial.suggest_float("hybrid_alpha_init", 0.2, 0.8, step=0.05),
+                    "max_iterations": trial.suggest_int("max_iterations", 1, 10),
+                }
+
+                if search_space == "csra":
+                    trial_params.update({
+                        "mhcsra_csra_lam": trial.suggest_float("mhcsra_csra_lam", 0.0, 1.0, step=0.1),
+                        "mhcsra_csra_fusion_method": trial.suggest_categorical("mhcsra_csra_fusion_method",
+                                                                               ["concat", "sum", "attention"]),
+                        "mhcsra_csra_use_residual": trial.suggest_categorical("mhcsra_csra_use_residual",
+                                                                              [True, False]),
+                    })
+                else:
+                    trial_params.update({
+                        "mhcsra_dropout": trial.suggest_float("mhcsra_dropout", 0.0, 0.5, step=0.1),
+                        "mhcsra_shallow_layers": trial.suggest_int("mhcsra_shallow_layers", 1, 3),
+                    })
+
+                # 2. 注入固定参数并构造 config
+                full_trial_params = _get_full_params_dict(trial_params)
+                config = _build_safe_config(full_trial_params, GLOBAL_BATCH_SIZE, device, num_classes=curr_n_cls)
+
+                try:
+                    train_loader = load_pth_to_dataloader(current_train_pth, batch_size=config.batch_size, shuffle=True)
+                    test_loader = load_pth_to_dataloader(current_test_pth, batch_size=config.batch_size, shuffle=False)
+
+                    model = get_backbone_ablation_model(variant, current_labels, config)
+                    lr = trial.suggest_float("learning_rate", 1e-5, 5e-5, log=True)
+
+                    train_model_for_optuna(model, train_loader, device, optuna_epochs, lr, verbose=False)
+
+                    model.eval()
+                    all_preds, all_labels = [], []
+                    with torch.no_grad():
+                        for img, label in test_loader:
+                            out = model(img.to(device))
+                            all_preds.append(torch.sigmoid(out).cpu())
+                            all_labels.append(label.cpu())
+
+                    all_preds_np = torch.cat(all_preds).numpy()
+                    all_labels_np = torch.cat(all_labels).numpy()
+                    mean_auc = compute_mean_auc(all_preds_np, all_labels_np)
+
+                    # 🚨 恢复：保存中间模型与日志，防断电白给
+                    trial_model_path = os.path.join(trial_dir, f"trial_{trial.number:04d}_auc_{mean_auc:.6f}.pth")
+                    torch.save({
+                        "trial_number": trial.number, "trial_value_auc": mean_auc,
+                        "model_state_dict": model.state_dict(), "config": config.__dict__,
+                        "trial_params": dict(trial.params), "variant": variant, "dataset": dataset_name
+                    }, trial_model_path)
+
+                    trial_rows = compute_trial_label_metrics(all_preds_np, all_labels_np, label_names=current_labels,
+                                                             threshold=0.5)
+                    trial_log_csv = os.path.join(trial_dir,
+                                                 f"optuna_trial_metrics_backbone_{dataset_name}_{variant}_{RUN_TAG}.csv")
+                    append_trial_metrics_csv(trial_log_csv, trial_no=trial.number, trial_auc=mean_auc, rows=trial_rows)
+
+                    return mean_auc
+                except Exception as e:
+                    print(f"[Mode5-{dataset_name}-{variant}] trial {trial.number} 失败！错误信息：")
+                    traceback.print_exc()  # 🚨 打印完整堆栈，一旦出错立刻知道是哪一行
+                    return float("-inf")
+
+            # 运行 Optuna
+            study_name = f"backbone_{dataset_name}_{variant}_optuna_{RUN_TAG}"
+            study = optuna.create_study(direction="maximize", study_name=study_name,
+                                        sampler=optuna.samplers.TPESampler())
+            study.optimize(objective_backbone, n_trials=n_trials, show_progress_bar=True)
+
+            # 提取最佳参数并保存 JSON
+            best_params_all = dict(study.best_params)
+            best_lr = best_params_all.pop("learning_rate", 1e-4)
+
+            json_path_variant = f"paper_backbone_best_params_{dataset_name}_{variant}_{RUN_TAG}.json"
+            with open(json_path_variant, "w", encoding="utf-8") as f:
+                json.dump(study.best_params, f, indent=4)  # 存入原始搜到的超参
+
+            # 🚨 关键：最终训练前，必须为 best_params 补充丢失的固定参数
+            full_best_params = _get_full_params_dict(best_params_all)
+            best_config = _build_safe_config(full_best_params, GLOBAL_BATCH_SIZE, device, num_classes=curr_n_cls)
+
+            # 最终完整训练
+            model_save_path = f"paper_ablation_best_model_backbone_{dataset_name}_{variant}_seed{TRAIN_SEED}_e{full_epochs}_{RUN_TAG}.pth"
+            train_loader = load_pth_to_dataloader(current_train_pth, batch_size=best_config.batch_size, shuffle=True)
+            test_loader = load_pth_to_dataloader(current_test_pth, batch_size=best_config.batch_size, shuffle=False)
+
+            final_model = get_backbone_ablation_model(variant, current_labels, best_config)
+            _, best_val_auc, best_epoch = train_full_model(
+                model=final_model,
+                train_loader=train_loader,
+                test_loader=test_loader,
+                config=best_config,
+                learning_rate=best_lr,
+                num_epochs=full_epochs,
+                model_save_path=model_save_path,
+                loss_kind="asl"
+            )
+
+            all_results.append({
+                "dataset": dataset_name, "backbone": variant, "best_trial_auc": float(study.best_value),
+                "best_val_auc": float(best_val_auc), "best_epoch": int(best_epoch),
+                "model_save_path": model_save_path, "best_params_json": json_path_variant
+            })
+
+    print("\n" + "=" * 70, flush=True)
+    print("[Mode 5] 所有数据集、骨干网络消融实验 (先搜后训) 完成！")
+    return all_results
 
 def compute_mean_auc(probs: np.ndarray, labels: np.ndarray) -> float:
     auc_scores = []
@@ -816,7 +1016,7 @@ if __name__ == "__main__":
         print(f"运行标识: {RUN_TAG}", flush=True)
         print(f"主训练轮数: {MAIN_NUM_EPOCHS}", flush=True)
         print(f"Optuna试验数: {MAIN_N_TRIALS}", flush=True)
-        print(f"模式(2) 固定参数文件: {FIXED_BEST_PARAMS_JSON}", flush=True)
+        print(f"模式(2/4/5) 固定参数文件: {FIXED_BEST_PARAMS_JSON}", flush=True)
         print("=" * 60, flush=True)
 
         print("请选择运行模式：", flush=True)
@@ -824,7 +1024,9 @@ if __name__ == "__main__":
         print("2. 直接使用已有最佳参数训练", flush=True)
         print("3. 论文消融批量训练（model_1..model_10：先搜参再训练）", flush=True)
         print("4. Model10(BCE) + Ours(ASL) 各跑一轮（不寻优）", flush=True)
-        choice = input("请输入选择 (1 / 2 / 3 / 4): ").strip()
+        print("5. 骨干网络 (Backbone) 消融实验批量训练（寻优）", flush=True)  # 👇 新增
+
+        choice = input("请输入选择 (1 / 2 / 3 / 4 / 5): ").strip()
         print(f"[Main] 已选择模式: {choice}\n", flush=True)
 
         if choice == "1":
@@ -838,8 +1040,12 @@ if __name__ == "__main__":
         elif choice == "4":
             json_target = FIXED_BEST_PARAMS_JSON if os.path.isfile(FIXED_BEST_PARAMS_JSON) else json_path_latest
             train_paper_model10_and_ours_from_json(json_path=json_target, num_epochs=PAPER_ABLATION_EPOCHS)
+        elif choice == "5":
+            # 模式五更新：直接跑先搜索后训练的完整流程
+            run_backbone_optuna_then_train(n_trials=PAPER_MODE3_N_TRIALS, optuna_epochs=PAPER_MODE3_OPTUNA_EPOCHS,
+                                           full_epochs=PAPER_ABLATION_EPOCHS)
         else:
-            print("无效输入，请重新运行并输入 1 / 2 / 3 / 4。")
+            print("无效输入，请重新运行并输入 1 / 2 / 3 / 4 / 5。")
 
     except Exception as e:
         print(f"[Main-Error] {e}")

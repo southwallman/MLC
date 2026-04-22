@@ -1,0 +1,37 @@
+训练开始时间: 2026-04-19 00:10:26
+模型保存路径: paper_ablation_best_model_backbone_ITDD_densenet121_seed3_e30_20260418_101444.pth
+设备: cuda  学习率: 4.940797442083886e-05  Epochs: 30  Loss: asl
+----------------------------------------------------------------------------------------------------
+Epoch 001/030 | train_loss=0.053636 | val_loss=0.052198 | train_auc=0.748546 | val_auc=0.816116 | lr=4.9407974e-05 | best_val_auc=0.816116 | best_epoch=1
+Epoch 002/030 | train_loss=0.042433 | val_loss=0.046350 | train_auc=0.861898 | val_auc=0.849577 | lr=4.9407974e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 003/030 | train_loss=0.037359 | val_loss=0.048910 | train_auc=0.908878 | val_auc=0.844446 | lr=4.9407974e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 004/030 | train_loss=0.034943 | val_loss=0.051503 | train_auc=0.920198 | val_auc=0.846619 | lr=4.9407974e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 005/030 | train_loss=0.031635 | val_loss=0.051883 | train_auc=0.942745 | val_auc=0.836366 | lr=4.9407974e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 006/030 | train_loss=0.029129 | val_loss=0.052178 | train_auc=0.945945 | val_auc=0.839585 | lr=4.9407974e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 007/030 | train_loss=0.027369 | val_loss=0.056516 | train_auc=0.956520 | val_auc=0.841016 | lr=4.9407974e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 008/030 | train_loss=0.025441 | val_loss=0.062994 | train_auc=0.962890 | val_auc=0.830251 | lr=2.4703987e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 009/030 | train_loss=0.020381 | val_loss=0.066904 | train_auc=0.979904 | val_auc=0.824121 | lr=2.4703987e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 010/030 | train_loss=0.017931 | val_loss=0.079401 | train_auc=0.982494 | val_auc=0.819121 | lr=2.4703987e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 011/030 | train_loss=0.016640 | val_loss=0.084792 | train_auc=0.987021 | val_auc=0.816995 | lr=2.4703987e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 012/030 | train_loss=0.015670 | val_loss=0.084721 | train_auc=0.987844 | val_auc=0.799524 | lr=2.4703987e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 013/030 | train_loss=0.014116 | val_loss=0.090339 | train_auc=0.990002 | val_auc=0.809258 | lr=2.4703987e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 014/030 | train_loss=0.013545 | val_loss=0.090145 | train_auc=0.991454 | val_auc=0.806427 | lr=1.2351994e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 015/030 | train_loss=0.011299 | val_loss=0.100239 | train_auc=0.993692 | val_auc=0.803592 | lr=1.2351994e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 016/030 | train_loss=0.010727 | val_loss=0.099810 | train_auc=0.994590 | val_auc=0.801602 | lr=1.2351994e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 017/030 | train_loss=0.009577 | val_loss=0.099294 | train_auc=0.995556 | val_auc=0.801966 | lr=1.2351994e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 018/030 | train_loss=0.009526 | val_loss=0.107620 | train_auc=0.995778 | val_auc=0.801200 | lr=1.2351994e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 019/030 | train_loss=0.009324 | val_loss=0.109135 | train_auc=0.996013 | val_auc=0.792179 | lr=1.2351994e-05 | best_val_auc=0.849577 | best_epoch=2
+Epoch 020/030 | train_loss=0.008959 | val_loss=0.108954 | train_auc=0.996215 | val_auc=0.799906 | lr=6.1759968e-06 | best_val_auc=0.849577 | best_epoch=2
+Epoch 021/030 | train_loss=0.008205 | val_loss=0.108704 | train_auc=0.996716 | val_auc=0.801608 | lr=6.1759968e-06 | best_val_auc=0.849577 | best_epoch=2
+Epoch 022/030 | train_loss=0.007568 | val_loss=0.111361 | train_auc=0.997269 | val_auc=0.796592 | lr=6.1759968e-06 | best_val_auc=0.849577 | best_epoch=2
+Epoch 023/030 | train_loss=0.007488 | val_loss=0.115372 | train_auc=0.997564 | val_auc=0.796213 | lr=6.1759968e-06 | best_val_auc=0.849577 | best_epoch=2
+Epoch 024/030 | train_loss=0.007016 | val_loss=0.118170 | train_auc=0.997931 | val_auc=0.797622 | lr=6.1759968e-06 | best_val_auc=0.849577 | best_epoch=2
+Epoch 025/030 | train_loss=0.007115 | val_loss=0.115706 | train_auc=0.997538 | val_auc=0.803878 | lr=6.1759968e-06 | best_val_auc=0.849577 | best_epoch=2
+Epoch 026/030 | train_loss=0.006980 | val_loss=0.119480 | train_auc=0.997828 | val_auc=0.800396 | lr=3.0879984e-06 | best_val_auc=0.849577 | best_epoch=2
+Epoch 027/030 | train_loss=0.006341 | val_loss=0.122873 | train_auc=0.998442 | val_auc=0.802654 | lr=3.0879984e-06 | best_val_auc=0.849577 | best_epoch=2
+Epoch 028/030 | train_loss=0.006221 | val_loss=0.120013 | train_auc=0.998552 | val_auc=0.805121 | lr=3.0879984e-06 | best_val_auc=0.849577 | best_epoch=2
+Epoch 029/030 | train_loss=0.006486 | val_loss=0.121248 | train_auc=0.997862 | val_auc=0.800340 | lr=3.0879984e-06 | best_val_auc=0.849577 | best_epoch=2
+Epoch 030/030 | train_loss=0.006079 | val_loss=0.118772 | train_auc=0.998539 | val_auc=0.800209 | lr=3.0879984e-06 | best_val_auc=0.849577 | best_epoch=2
+----------------------------------------------------------------------------------------------------
+训练结束时间: 2026-04-19 00:55:12
+Best Val AUC: 0.849577  Best Epoch: 2
