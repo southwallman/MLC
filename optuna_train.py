@@ -380,40 +380,181 @@ def run_paper_mode3_optuna_then_train(
     return results
 
 
-def train_paper_model10_and_ours_from_json(
-        json_path: str,
-        *,
-        num_epochs: int = PAPER_ABLATION_EPOCHS,
+def run_mode4_ours_optuna_then_train(
+        n_trials: int = PAPER_MODE3_N_TRIALS,
+        optuna_epochs: int = PAPER_MODE3_OPTUNA_EPOCHS,
+        full_epochs: int = PAPER_ABLATION_EPOCHS,
 ) -> List[Dict[str, Any]]:
-    with open(json_path, "r", encoding="utf-8") as f:
-        best_params = json.load(f)
-    learning_rate = float(best_params.get("learning_rate", 1e-4))
-    batch_size = int(best_params.get("batch_size", 16))
-    best_params = dict(best_params)
-    best_params.pop("learning_rate", None)
-    best_params.pop("batch_size", None)
+    """
+    更新后的模式 4：专门针对 ours (MTI_HANet) 使用 ASL 损失进行搜参和训练。
+    支持手动切换数据集，保存格式完全对齐 Mode 3。
+    """
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    search_space = str(MHCSRA_SEARCH_SPACE).lower()
 
-    # 🚨 使用安全构建
-    config = _build_safe_config(best_params, batch_size, "cuda" if torch.cuda.is_available() else "cpu")
+    # 🚨 【在这里手动切换数据集】想跑哪个就把另一个注释掉
+    DATASETS_CONFIG = {
+        # "TongueDx": {
+        #     "train_pth": "../dataset/train_data_juzhong.pth",
+        #     "test_pth": "../dataset/test_data_juzhong.pth",
+        #     "labels": tonguedxlabel
+        # },
+        "ITDD": {
+            "train_pth": "../dataset/shezhenv3_train_data.pth",
+            "test_pth": "../dataset/shezhenv3_test_data.pth",
+            "labels": ITDDlabel
+        }
+    }
 
-    train_loader = load_pth_to_dataloader(PAPER_ABLATION_TRAIN_PTH, batch_size=config.batch_size, shuffle=True)
-    test_loader = load_pth_to_dataloader(PAPER_ABLATION_TEST_PTH, batch_size=config.batch_size, shuffle=False)
-
-    jobs = [("model_10", "bce", "Model10_BCE_M_alpha"), ("ours", "asl", "Ours_ASL_M_alpha")]
     results: List[Dict[str, Any]] = []
-    for variant, loss_kind, tag in jobs:
-        suite_tag = f"paper_{variant}_{tag}_{str(MHCSRA_SEARCH_SPACE).lower()}"
-        model_save_path = f"paper_ablation_best_model_{suite_tag}_seed{TRAIN_SEED}_e{num_epochs}_{RUN_TAG}.pth"
-        model = get_paper_ablation_model(variant, GLOBAL_LABELS, config)
+
+    for dataset_name, ds_info in DATASETS_CONFIG.items():
+        current_train_pth = ds_info["train_pth"]
+        current_test_pth = ds_info["test_pth"]
+        current_labels = ds_info["labels"]
+        curr_n_cls = len(current_labels)
+        variant = "ours"
+
+        print("\n" + "=" * 80, flush=True)
+        print(
+            f"[Mode 4] 开始 {variant} 针对 {dataset_name} 数据集: Optuna({n_trials} trials) -> FullTrain({full_epochs} epochs)",
+            flush=True)
+
+        # 【保存格式 1：Trial 文件夹】
+        trial_dir = f"optuna_trial_records_mode4_{variant}_{dataset_name}_{RUN_TAG}"
+        os.makedirs(trial_dir, exist_ok=True)
+
+        def objective_ours(trial: optuna.Trial) -> float:
+            trial_params = {
+                "acfp_mode": trial.suggest_categorical("acfp_mode", ['adaptive', 'keep']),
+                "acfp_use_residual": trial.suggest_categorical("acfp_use_residual", [True, False]),
+                "mmaef_ffn_hidden_ratio": trial.suggest_float("mmaef_ffn_hidden_ratio", 2.0, 8.0, step=1.0),
+                "mmaef_use_dropout": trial.suggest_categorical("mmaef_use_dropout", [True, False]),
+                "mmaef_dropout_rate": trial.suggest_float("mmaef_dropout_rate", 0.0, 0.3, step=0.05),
+                "hybrid_dropout_rate": trial.suggest_float("hybrid_dropout_rate", 0.0, 0.3, step=0.05),
+                "hybrid_activation": trial.suggest_categorical("hybrid_activation", ['relu', 'gelu', 'leaky_relu']),
+                "hybrid_alpha_init": trial.suggest_float("hybrid_alpha_init", 0.2, 0.8, step=0.05),
+                "max_iterations": trial.suggest_int("max_iterations", 1, 10),
+            }
+
+            if search_space == "csra":
+                trial_params.update({
+                    "mhcsra_csra_lam": trial.suggest_float("mhcsra_csra_lam", 0.0, 1.0, step=0.1),
+                    "mhcsra_csra_fusion_method": trial.suggest_categorical("mhcsra_csra_fusion_method",
+                                                                           ["concat", "sum", "attention"]),
+                    "mhcsra_csra_use_residual": trial.suggest_categorical("mhcsra_csra_use_residual", [True, False]),
+                    "mhcsra_input_dim": FIXED_FEATURE_DIM,
+                    "mhcsra_out_channel": FIXED_FEATURE_DIM,
+                    "mhcsra_num_heads": FIXED_NUM_HEADS,
+                })
+            else:
+                trial_params.update({
+                    "mhcsra_dropout": trial.suggest_float("mhcsra_dropout", 0.0, 0.5, step=0.1),
+                    "mhcsra_shallow_layers": trial.suggest_int("mhcsra_shallow_layers", 1, 3),
+                    "mhcsra_num_heads": FIXED_NUM_HEADS,
+                    "mhcsra_feature_dim": FIXED_FEATURE_DIM,
+                    "mhcsra_out_channel": FIXED_FEATURE_DIM,
+                    "mhcsra_use_shallow": True,
+                })
+
+            trial_params.update({
+                "acfp_target_seq_len": FIXED_SEQ_LEN,
+                "mmaef_num_heads": FIXED_NUM_HEADS,
+                "hybrid_intermediate_dim": 256,
+            })
+
+            config = _build_safe_config(trial_params, GLOBAL_BATCH_SIZE, device, num_classes=curr_n_cls)
+
+            try:
+                train_loader = load_pth_to_dataloader(current_train_pth, batch_size=config.batch_size, shuffle=True)
+                test_loader = load_pth_to_dataloader(current_test_pth, batch_size=config.batch_size, shuffle=False)
+
+                model = get_paper_ablation_model(variant, current_labels, config)
+                lr = trial.suggest_float("learning_rate", 1e-5, 5e-5, log=True)
+
+                # 使用 Optuna 短训练
+                train_model_for_optuna(model=model, train_loader=train_loader, device=config.device,
+                                       num_epochs=optuna_epochs, learning_rate=lr, use_asl=True, verbose=False)
+
+                model.eval()
+                all_preds, all_labels = [], []
+                with torch.no_grad():
+                    for images, labels_batch in test_loader:
+                        outputs = model(images.to(config.device))
+                        all_preds.append(torch.sigmoid(outputs).cpu())
+                        all_labels.append(labels_batch.cpu())
+
+                all_preds = torch.cat(all_preds, dim=0).numpy()
+                all_labels = torch.cat(all_labels, dim=0).numpy()
+                mean_auc = compute_mean_auc(all_preds, all_labels)
+
+                # 【保存格式 2：每个 Trial 的模型和参数记录】
+                trial_model_path = os.path.join(trial_dir, f"trial_{trial.number:04d}_auc_{mean_auc:.6f}.pth")
+                torch.save({
+                    "trial_number": trial.number, "trial_value_auc": mean_auc,
+                    "model_state_dict": model.state_dict(), "config": config.__dict__,
+                    "trial_params": dict(trial.params), "variant": variant, "dataset": dataset_name
+                }, trial_model_path)
+
+                # 【保存格式 3：CSV 日志追加】
+                trial_rows = compute_trial_label_metrics(all_preds, all_labels, label_names=current_labels,
+                                                         threshold=0.5)
+                trial_log_csv = os.path.join(trial_dir,
+                                             f"optuna_trial_metrics_mode4_{variant}_{dataset_name}_{RUN_TAG}.csv")
+                append_trial_metrics_csv(trial_log_csv, trial_no=trial.number, trial_auc=mean_auc, rows=trial_rows)
+
+                return mean_auc
+            except Exception as e:
+                print(f"[Mode4-{dataset_name}-{variant}] trial 失败: {e}", flush=True)
+                traceback.print_exc()
+                return float("-inf")
+
+        study = optuna.create_study(direction="maximize", study_name=f"mode4_{variant}_{dataset_name}_optuna_{RUN_TAG}",
+                                    sampler=optuna.samplers.TPESampler())
+        study.optimize(objective_ours, n_trials=n_trials, show_progress_bar=True)
+
+        best_params_all = dict(study.best_params)
+        best_learning_rate = float(best_params_all.get("learning_rate", 1e-4))
+
+        # 【保存格式 4：输出 Best JSON 参数文件】
+        json_path_variant = f"paper_ablation_best_params_mode4_{variant}_{dataset_name}_{RUN_TAG}.json"
+        with open(json_path_variant, "w", encoding="utf-8") as f:
+            json.dump(best_params_all, f, indent=4)
+
+        best_params_for_cfg = dict(best_params_all)
+        best_params_for_cfg.pop("learning_rate", None)
+
+        # 为了防漏补全固定参数
+        if search_space == "csra":
+            best_params_for_cfg.update({"mhcsra_input_dim": FIXED_FEATURE_DIM, "mhcsra_out_channel": FIXED_FEATURE_DIM,
+                                        "mhcsra_num_heads": FIXED_NUM_HEADS})
+        else:
+            best_params_for_cfg.update({"mhcsra_num_heads": FIXED_NUM_HEADS, "mhcsra_feature_dim": FIXED_FEATURE_DIM,
+                                        "mhcsra_out_channel": FIXED_FEATURE_DIM, "mhcsra_use_shallow": True})
+        best_params_for_cfg.update(
+            {"acfp_target_seq_len": FIXED_SEQ_LEN, "mmaef_num_heads": FIXED_NUM_HEADS, "hybrid_intermediate_dim": 256})
+
+        best_config = _build_safe_config(best_params_for_cfg, GLOBAL_BATCH_SIZE, device, num_classes=curr_n_cls)
+
+        # 【保存格式 5：最终的 Best Model】
+        model_save_path = f"paper_ablation_best_model_mode4_{variant}_{dataset_name}_seed{TRAIN_SEED}_e{full_epochs}_{RUN_TAG}.pth"
+        train_loader = load_pth_to_dataloader(current_train_pth, batch_size=best_config.batch_size, shuffle=True)
+        test_loader = load_pth_to_dataloader(current_test_pth, batch_size=best_config.batch_size, shuffle=False)
+        best_model = get_paper_ablation_model(variant, current_labels, best_config)
+
+        # 统一使用 ASL 损失训练
         _, best_val_auc, best_epoch = train_full_model(
-            model=model, train_loader=train_loader, test_loader=test_loader,
-            config=config, learning_rate=learning_rate, num_epochs=num_epochs,
-            model_save_path=model_save_path, loss_kind=loss_kind,
+            model=best_model, train_loader=train_loader, test_loader=test_loader,
+            config=best_config, learning_rate=best_learning_rate, num_epochs=full_epochs,
+            model_save_path=model_save_path, loss_kind="asl"
         )
+
         results.append({
-            "variant": variant, "loss_kind": loss_kind, "best_val_auc": float(best_val_auc),
-            "best_epoch": int(best_epoch), "model_save_path": model_save_path,
+            "dataset": dataset_name, "variant": variant, "best_trial_auc": float(study.best_value),
+            "best_val_auc": float(best_val_auc), "best_epoch": int(best_epoch),
+            "model_save_path": model_save_path, "best_params_json": json_path_variant,
         })
+
     return results
 
 
@@ -1023,8 +1164,8 @@ if __name__ == "__main__":
         print("1. 先寻优最佳参数（Optuna），再训练", flush=True)
         print("2. 直接使用已有最佳参数训练", flush=True)
         print("3. 论文消融批量训练（model_1..model_10：先搜参再训练）", flush=True)
-        print("4. Model10(BCE) + Ours(ASL) 各跑一轮（不寻优）", flush=True)
-        print("5. 骨干网络 (Backbone) 消融实验批量训练（寻优）", flush=True)  # 👇 新增
+        print("4. Mode 4: 专门针对 Ours 使用 ASL 进行搜参和完整训练 (支持切换数据集)", flush=True)  # 👈 修改这里
+        print("5. 骨干网络 (Backbone) 消融实验批量训练（寻优）", flush=True)
 
         choice = input("请输入选择 (1 / 2 / 3 / 4 / 5): ").strip()
         print(f"[Main] 已选择模式: {choice}\n", flush=True)
@@ -1038,10 +1179,10 @@ if __name__ == "__main__":
             run_paper_mode3_optuna_then_train(n_trials=PAPER_MODE3_N_TRIALS, optuna_epochs=PAPER_MODE3_OPTUNA_EPOCHS,
                                               full_epochs=PAPER_ABLATION_EPOCHS)
         elif choice == "4":
-            json_target = FIXED_BEST_PARAMS_JSON if os.path.isfile(FIXED_BEST_PARAMS_JSON) else json_path_latest
-            train_paper_model10_and_ours_from_json(json_path=json_target, num_epochs=PAPER_ABLATION_EPOCHS)
+            # 👈 这里调用新的函数
+            run_mode4_ours_optuna_then_train(n_trials=PAPER_MODE3_N_TRIALS, optuna_epochs=PAPER_MODE3_OPTUNA_EPOCHS,
+                                             full_epochs=PAPER_ABLATION_EPOCHS)
         elif choice == "5":
-            # 模式五更新：直接跑先搜索后训练的完整流程
             run_backbone_optuna_then_train(n_trials=PAPER_MODE3_N_TRIALS, optuna_epochs=PAPER_MODE3_OPTUNA_EPOCHS,
                                            full_epochs=PAPER_ABLATION_EPOCHS)
         else:

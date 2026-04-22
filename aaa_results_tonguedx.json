@@ -1,0 +1,258 @@
+[
+    {
+        "id": 1,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/seg/0001_1000/5_1.jpg",
+        "ground_truth": [
+            "Spot",
+            "Crack",
+            "Toothmark"
+        ],
+        "baseline": {
+            "TonguePale": 0.2893323302268982,
+            "TipSideRed": 0.9999380111694336,
+            "Spot": 0.999284565448761,
+            "Ecchymosis": 0.9999998807907104,
+            "Crack": 0.9999661445617676,
+            "Toothmark": 0.9068222045898438,
+            "FurThick": 0.6800621747970581,
+            "FurYellow": 0.9966603517532349
+        },
+        "ours": {
+            "TonguePale": 0.6907690167427063,
+            "TipSideRed": 0.998915433883667,
+            "Spot": 0.951198160648346,
+            "Ecchymosis": 0.4884865880012512,
+            "Crack": 0.999688982963562,
+            "Toothmark": 0.49638572335243225,
+            "FurThick": 0.9999978542327881,
+            "FurYellow": 0.9872942566871643
+        }
+    },
+    {
+        "id": 2,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/seg/0001_1000/2_1.jpg",
+        "ground_truth": [
+            "TipSideRed",
+            "Spot",
+            "Ecchymosis",
+            "Crack",
+            "FurThick",
+            "FurYellow"
+        ],
+        "baseline": {
+            "TonguePale": 0.2993718385696411,
+            "TipSideRed": 0.9998775720596313,
+            "Spot": 0.9993447661399841,
+            "Ecchymosis": 0.9999997615814209,
+            "Crack": 0.9999129772186279,
+            "Toothmark": 0.9214569926261902,
+            "FurThick": 0.707787811756134,
+            "FurYellow": 0.9964178800582886
+        },
+        "ours": {
+            "TonguePale": 0.691895604133606,
+            "TipSideRed": 0.9988775849342346,
+            "Spot": 0.9423344135284424,
+            "Ecchymosis": 0.4862975776195526,
+            "Crack": 0.9996612071990967,
+            "Toothmark": 0.4751754105091095,
+            "FurThick": 0.999997615814209,
+            "FurYellow": 0.9801252484321594
+        }
+    },
+    {
+        "id": 3,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/seg/0001_1000/7_1.jpg",
+        "ground_truth": [
+            "TonguePale",
+            "TipSideRed",
+            "Spot",
+            "Crack",
+            "Toothmark",
+            "FurThick"
+        ],
+        "baseline": {
+            "TonguePale": 0.2939070761203766,
+            "TipSideRed": 0.9994333386421204,
+            "Spot": 0.9988188147544861,
+            "Ecchymosis": 0.9999974966049194,
+            "Crack": 0.9996954202651978,
+            "Toothmark": 0.9165500402450562,
+            "FurThick": 0.6718733310699463,
+            "FurYellow": 0.9961387515068054
+        },
+        "ours": {
+            "TonguePale": 0.6789630651473999,
+            "TipSideRed": 0.9974225759506226,
+            "Spot": 0.8969703316688538,
+            "Ecchymosis": 0.4076785445213318,
+            "Crack": 0.9989067316055298,
+            "Toothmark": 0.5606412887573242,
+            "FurThick": 0.9999891519546509,
+            "FurYellow": 0.9711180329322815
+        }
+    },
+    {
+        "id": 4,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/seg/0001_1000/17_1.jpg",
+        "ground_truth": [
+            "TipSideRed",
+            "Spot",
+            "Crack",
+            "Toothmark",
+            "FurThick",
+            "FurYellow"
+        ],
+        "baseline": {
+            "TonguePale": 0.20804829895496368,
+            "TipSideRed": 0.9999115467071533,
+            "Spot": 0.999596893787384,
+            "Ecchymosis": 0.9999998807907104,
+            "Crack": 0.9999431371688843,
+            "Toothmark": 0.9313411116600037,
+            "FurThick": 0.6607832908630371,
+            "FurYellow": 0.9973371624946594
+        },
+        "ours": {
+            "TonguePale": 0.6527527570724487,
+            "TipSideRed": 0.9982935786247253,
+            "Spot": 0.949239194393158,
+            "Ecchymosis": 0.5692636370658875,
+            "Crack": 0.9997696280479431,
+            "Toothmark": 0.5081639289855957,
+            "FurThick": 0.9999978542327881,
+            "FurYellow": 0.9853821992874146
+        }
+    },
+    {
+        "id": 5,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/seg/0001_1000/21_1.jpg",
+        "ground_truth": [
+            "TonguePale",
+            "TipSideRed",
+            "Crack",
+            "Toothmark",
+            "FurThick"
+        ],
+        "baseline": {
+            "TonguePale": 0.2744455337524414,
+            "TipSideRed": 0.9998910427093506,
+            "Spot": 0.9984971284866333,
+            "Ecchymosis": 0.9999998807907104,
+            "Crack": 0.999945878982544,
+            "Toothmark": 0.9122991561889648,
+            "FurThick": 0.7456284165382385,
+            "FurYellow": 0.9955230951309204
+        },
+        "ours": {
+            "TonguePale": 0.699042022228241,
+            "TipSideRed": 0.9981731176376343,
+            "Spot": 0.9464142322540283,
+            "Ecchymosis": 0.5252115726470947,
+            "Crack": 0.9995229244232178,
+            "Toothmark": 0.5579308271408081,
+            "FurThick": 0.9999972581863403,
+            "FurYellow": 0.9892662763595581
+        }
+    },
+    {
+        "id": 6,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/seg/0001_1000/28_1.jpg",
+        "ground_truth": [
+            "TonguePale",
+            "TipSideRed",
+            "Crack",
+            "Toothmark",
+            "FurThick"
+        ],
+        "baseline": {
+            "TonguePale": 0.15888576209545135,
+            "TipSideRed": 0.9998804330825806,
+            "Spot": 0.9996415376663208,
+            "Ecchymosis": 0.9999998807907104,
+            "Crack": 0.999964714050293,
+            "Toothmark": 0.9308676719665527,
+            "FurThick": 0.667916476726532,
+            "FurYellow": 0.997998058795929
+        },
+        "ours": {
+            "TonguePale": 0.6898255348205566,
+            "TipSideRed": 0.9984157085418701,
+            "Spot": 0.9432570934295654,
+            "Ecchymosis": 0.5754944682121277,
+            "Crack": 0.9996893405914307,
+            "Toothmark": 0.5956414937973022,
+            "FurThick": 0.9999983310699463,
+            "FurYellow": 0.9898053407669067
+        }
+    },
+    {
+        "id": 7,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/seg/0001_1000/43_1.jpg",
+        "ground_truth": [
+            "TonguePale",
+            "Crack",
+            "Toothmark",
+            "FurThick",
+            "FurYellow"
+        ],
+        "baseline": {
+            "TonguePale": 0.2904675304889679,
+            "TipSideRed": 0.9990711212158203,
+            "Spot": 0.9942958950996399,
+            "Ecchymosis": 0.9999971389770508,
+            "Crack": 0.9998373985290527,
+            "Toothmark": 0.8347908854484558,
+            "FurThick": 0.7251110076904297,
+            "FurYellow": 0.9879485368728638
+        },
+        "ours": {
+            "TonguePale": 0.6717280149459839,
+            "TipSideRed": 0.9970756769180298,
+            "Spot": 0.8583804368972778,
+            "Ecchymosis": 0.39521369338035583,
+            "Crack": 0.9979912042617798,
+            "Toothmark": 0.47819283604621887,
+            "FurThick": 0.9999703168869019,
+            "FurYellow": 0.9281190037727356
+        }
+    },
+    {
+        "id": 8,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/seg/0001_1000/46_1.jpg",
+        "ground_truth": [
+            "TipSideRed",
+            "Spot",
+            "Crack",
+            "FurThick"
+        ],
+        "baseline": {
+            "TonguePale": 0.293650358915329,
+            "TipSideRed": 0.9985480904579163,
+            "Spot": 0.9719260334968567,
+            "Ecchymosis": 0.9999973773956299,
+            "Crack": 0.9997674822807312,
+            "Toothmark": 0.7858688831329346,
+            "FurThick": 0.8371726274490356,
+            "FurYellow": 0.9759793877601624
+        },
+        "ours": {
+            "TonguePale": 0.653831958770752,
+            "TipSideRed": 0.9956679344177246,
+            "Spot": 0.8519802093505859,
+            "Ecchymosis": 0.41246527433395386,
+            "Crack": 0.9964107871055603,
+            "Toothmark": 0.45332595705986023,
+            "FurThick": 0.9999293088912964,
+            "FurYellow": 0.9043770432472229
+        }
+    }
+]

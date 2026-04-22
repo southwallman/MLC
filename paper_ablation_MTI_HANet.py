@@ -13,11 +13,11 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 
-from MHCSRA_HP import MultiHeadClassSpecificFeatureEnhancement
-from model.resnet101_lay4 import resnet101_lay4
-from ACFP_HP import AdaptiveConvFeatureProjection_HP
-from MMAEF_HP import MultiHeadCrossAttention_HP, MMAEF_HP
-from HMLH_HP import HybridMultiLabelHead_HP
+from tonguedx_MLC.our_version7.MHCSRA_HP import MultiHeadClassSpecificFeatureEnhancement
+from tonguedx_MLC.our_version7.model.resnet101_lay4 import resnet101_lay4
+from tonguedx_MLC.our_version7.ACFP_HP import AdaptiveConvFeatureProjection_HP
+from tonguedx_MLC.our_version7.MMAEF_HP import MultiHeadCrossAttention_HP, MMAEF_HP
+from tonguedx_MLC.our_version7.HMLH_HP import HybridMultiLabelHead_HP
 from tonguedx_MLC.testencode import labal_to_enconde
 
 
