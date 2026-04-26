@@ -146,6 +146,58 @@ PAPER_MODE3_OPTUNA_EPOCHS = 3
 PAPER_ABLATION_TRAIN_PTH = "../dataset/train_data_juzhong.pth"
 PAPER_ABLATION_TEST_PTH = "../dataset/test_data_juzhong.pth"
 
+
+# def build_differential_adam(
+#         model: nn.Module,
+#         base_lr: float,
+#         *,
+#         weight_decay: float = OPTIMIZER_WEIGHT_DECAY,
+#         new_module_lr_multiplier: float = NEW_MODULE_LR_MULTIPLIER,
+# ) -> torch.optim.Optimizer:
+#     if hasattr(model, "get_optimizer_groups") and callable(model.get_optimizer_groups):
+#         param_groups = model.get_optimizer_groups(
+#             base_lr=base_lr, new_module_lr_multiplier=new_module_lr_multiplier
+#         )
+#     else:
+#         backbone_params = []
+#         new_module_params = []
+#         matrix_params = []  # 👈 新增：专门给标签相关性矩阵准备的池子
+#
+#         for name, param in model.named_parameters():
+#             if not param.requires_grad:
+#                 continue
+#
+#             # 🚨 拦截标签相关性矩阵 M
+#             if "correlation_matrix" in name:
+#                 matrix_params.append(param)
+#             elif "cnnbackbone" in name:
+#                 backbone_params.append(param)
+#             else:
+#                 new_module_params.append(param)
+#
+#         if not backbone_params:
+#             return torch.optim.AdamW(model.parameters(), lr=base_lr, weight_decay=weight_decay)
+#
+#         # 组装基础参数组
+#         param_groups = [
+#             {"params": backbone_params, "lr": base_lr, "weight_decay": weight_decay},
+#             {"params": new_module_params, "lr": base_lr * new_module_lr_multiplier, "weight_decay": weight_decay},
+#         ]
+#
+#         # 🚨 为矩阵 M 开启“皇室特权”
+#         if matrix_params:
+#             # 10倍放大，并设置最高 1e-3 的安全上限防止梯度爆炸
+#             matrix_lr = min(base_lr * 10.0, 1e-3)
+#             param_groups.append({
+#                 "params": matrix_params,
+#                 "lr": matrix_lr,
+#                 "weight_decay": 0.0  # 绝对不能有权重衰减，让非对角线自由生长！
+#             })
+#             print(f"🔥 [优化器拦截] 已为 correlation_matrix 开启特权 -> LR: {matrix_lr:.6f}, Weight Decay: 0.0",
+#                   flush=True)
+#
+#     # 顺手把 Adam 升级成 AdamW，对多标签分类的正则化效果更好
+#     return torch.optim.AdamW(param_groups, weight_decay=weight_decay)
 def build_differential_adam(
         model: nn.Module,
         base_lr: float,
@@ -394,16 +446,16 @@ def run_mode4_ours_optuna_then_train(
 
     # 🚨 【在这里手动切换数据集】想跑哪个就把另一个注释掉
     DATASETS_CONFIG = {
-        # "TongueDx": {
-        #     "train_pth": "../dataset/train_data_juzhong.pth",
-        #     "test_pth": "../dataset/test_data_juzhong.pth",
-        #     "labels": tonguedxlabel
-        # },
-        "ITDD": {
-            "train_pth": "../dataset/shezhenv3_train_data.pth",
-            "test_pth": "../dataset/shezhenv3_test_data.pth",
-            "labels": ITDDlabel
-        }
+        "TongueDx": {
+            "train_pth": "../dataset/train_data_juzhong.pth",
+            "test_pth": "../dataset/test_data_juzhong.pth",
+            "labels": tonguedxlabel
+        },
+        # "ITDD": {
+        #     "train_pth": "../dataset/shezhenv3_train_data.pth",
+        #     "test_pth": "../dataset/shezhenv3_test_data.pth",
+        #     "labels": ITDDlabel
+        # }
     }
 
     results: List[Dict[str, Any]] = []

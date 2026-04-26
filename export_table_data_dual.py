@@ -30,7 +30,7 @@ DATASETS_CONFIG = {
 
         # 新增：定义两个输出文件的名字
         "full_output_json": "aaa_full_results_tonguedx.json",
-        "star_output_json": "aaa_star_samples_tonguedx.json"
+        "star_output_json": "aab_star_samples_tonguedx.json"
     },
 
     "ITDD": {
@@ -54,7 +54,7 @@ DATASETS_CONFIG = {
         "ours_json": "../our_version7/paper_ablation_best_params_mode4_ours_ITDD_20260422_205455.json",
 
         "full_output_json": "aaa_full_results_itdd.json",
-        "star_output_json": "aaa_star_samples_itdd.json"
+        "star_output_json": "aab_star_samples_itdd.json"
     }
 }
 
@@ -79,66 +79,72 @@ def load_image(img_path, device):
 
 
 def mine_star_samples(full_json_path, star_json_path):
-    """
-    淘金函数：自动筛选出 MTI_HANet 表现碾压 Baseline 的明星样本
-    """
-    print(f"\n[{full_json_path}] 开启自动淘金模式，为您筛选SCI投稿样本...")
+    if not os.path.exists(full_json_path):
+        return
+
     with open(full_json_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
     star_samples = []
 
-    # --- 筛选标准：你可以根据实际跑出的分数微调这些阈值 ---
-    FP_BASE_HIGH = 0.8  # 误诊：Baseline 无病却猜 > 0.8
-    FP_OURS_LOW = 0.45  # 抑制：Ours 成功把无病压到 < 0.45
-
-    FN_BASE_LOW = 0.35  # 漏诊：Baseline 有病却猜 < 0.35
-    FN_OURS_HIGH = 0.65  # 抢救：Ours 成功把有病捞到 > 0.65
-
     for item in data:
-        gt = set(item['ground_truth'])
-        baseline = item['baseline']
-        ours = item['ours']
+        gt_labels = item.get("ground_truth", [])
+        baseline_probs = item.get("baseline", {})
+        ours_probs = item.get("ours", {})
 
-        rescue_count = 0  # 抢救成功次数
-        suppress_count = 0  # 抑制误诊次数
-        reasons = []  # 记录上榜理由
+        # ==========================================
+        # 1. 基础条件（Rule 1）：一票否决
+        # 在所有的真实标签中，ours 必须严格大于 baseline
+        # ==========================================
+        rule1_passed = True
+        for label in gt_labels:
+            if ours_probs.get(label, 0) <= baseline_probs.get(label, 0):
+                rule1_passed = False
+                break  # 只要有一个没赢，直接淘汰该样本
 
-        for label, b_prob in baseline.items():
-            o_prob = ours[label]
+        if not rule1_passed:
+            continue  # 淘汰，检查下一个样本
 
-            if label in gt:
-                # 寻找【漏诊被抢救】的案例
-                if b_prob < FN_BASE_LOW and o_prob > FN_OURS_HIGH:
-                    rescue_count += 1
-                    reasons.append(f"成功抢救 [{label}]: Base= {b_prob:.2f} -> Ours= {o_prob:.2f}")
-            else:
-                # 寻找【误诊被抑制】的案例
-                if b_prob > FP_BASE_HIGH and o_prob < FP_OURS_LOW:
-                    suppress_count += 1
-                    reasons.append(f"成功抑制 [{label}]: Base= {b_prob:.2f} -> Ours= {o_prob:.2f}")
+        # 既然通过了一票否决，那么它在 GT 上赢的个数，就是 GT 的总长度
+        primary_score = len(gt_labels)
 
-        # 如果至少有 1 次抢救或抑制，就是值得放到论文里的好样本！
-        if rescue_count > 0 or suppress_count > 0:
-            item['star_score'] = rescue_count + suppress_count  # 打分
-            item['star_reasons'] = reasons
-            star_samples.append(item)
+        # ==========================================
+        # 2. 辅助条件（Rule 2）：统计压制了多少个假标签
+        # ==========================================
+        secondary_score = 0
+        star_reasons = []  # 用于记录战况，方便你在 JSON 里直观查看
 
-    # 按照惊艳程度（得分）从高到低排序
-    star_samples.sort(key=lambda x: x['star_score'], reverse=True)
+        # 记录基础盘战绩
+        for label in gt_labels:
+            star_reasons.append(
+                f"基础达标(全胜): [{label}] Ours({ours_probs.get(label, 0):.2f}) > Base({baseline_probs.get(label, 0):.2f})")
+
+        # 扫描所有的标签，寻找假标签（不在 ground_truth 里的）
+        for label in baseline_probs.keys():
+            if label not in gt_labels:
+                # 在假标签下，ours 小于 baseline 就是一种成功的“抑制”
+                if ours_probs.get(label, 0) < baseline_probs.get(label, 0):
+                    secondary_score += 1
+                    star_reasons.append(
+                        f"辅助加分(抑制): [{label}] Base({baseline_probs.get(label, 0):.2f}) -> Ours({ours_probs.get(label, 0):.2f})")
+
+        # 保存分数与记录
+        item["primary_score"] = primary_score
+        item["secondary_score"] = secondary_score
+        item["star_reasons"] = star_reasons
+        star_samples.append(item)
+
+    # ==========================================
+    # 3. 主次双重排序 (Dual-key Sort)
+    # 优先比较 primary_score，相等时比较 secondary_score，均降序排列
+    # ==========================================
+    star_samples.sort(key=lambda x: (x["primary_score"], x["secondary_score"]), reverse=True)
 
     with open(star_json_path, 'w', encoding='utf-8') as f:
         json.dump(star_samples, f, indent=4, ensure_ascii=False)
 
-    print(f"✅ 淘金完成！从 {len(data)} 个全量样本中，找到了 {len(star_samples)} 个超级明星样本！")
-    print(f"✅ 精选结果已保存至: {star_json_path}")
-    if len(star_samples) > 0:
-        print("\n🏆 以下是最强 Top 3 样本上榜理由（你可以直接写进论文）：")
-        for i in range(min(5, len(star_samples))):
-            print(f"  [{i + 1}] 图片 {star_samples[i]['image']}")
-            for reason in star_samples[i]['star_reasons']:
-                print(f"      - {reason}")
-
+    print(f"\n🌟 按照 [严苛一票否决 + 双重排序] 规则，成功挖掘出 {len(star_samples)} 个顶级明星样本！")
+    print(f"数据已按照战绩排名保存至: {star_json_path}\n")
 
 def process_single_dataset(dataset_name, config_dict, device):
     print(f"\n{'=' * 60}")
@@ -237,7 +243,7 @@ def process_single_dataset(dataset_name, config_dict, device):
             # 🛡️ 获取真实路径与加载图像
             # =================================================================
             if data_format == "csv":
-                img_path = "../../a_TongueDx2/seg/" + img_name if dataset_name == "TongueDx" else img_name
+                img_path = "../../a_TongueDx2/origin/" + img_name if dataset_name == "TongueDx" else img_name
                 row = df[df['image_path'] == img_name]
                 if row.empty: continue
                 multi_hot_vector = row[labels].values[0].tolist()

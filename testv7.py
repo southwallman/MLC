@@ -30,7 +30,7 @@ ITDDlabel=[
 # ==============================================================================
 # 🚨 全局标签配置 (一处修改，全局生效)
 # ==============================================================================
-GLOBAL_LABELS = ITDDlabel
+GLOBAL_LABELS = tonguedxlabel
 GLOBAL_NUM_CLASSES = len(GLOBAL_LABELS)
 
 
@@ -420,44 +420,78 @@ def config_mode2():
 
 def config_mode3():
     """
-    mode3（TongueDx）：
-    - 测试集：TongueDx -> ../dataset/test_data_juzhong.pth
-    - 权重：按 optuna_trial_records_paper_model_{i}_20260402_200311 目录中 pth（最多每个 model 取前 10 个）
-    - 输出：tonguedx_test/
+    Mode 3: 全自动智能扫盘模式
+    - 自动根据 GLOBAL_LABELS 数量切换测试集 (8 -> TongueDx, 13 -> ITDD)
+    - 扫描指定的 TARGET_FOLDER 目录下的所有 .pth 权重
+    - 输出严格对齐 Vue 解析的格式：test_results_{variant}_{dataset_tag}_{trial_name}.csv
     """
-    test_data_path = "../dataset/test_data_juzhong.pth"
+    # =========================================================
+    # 🚨 配置区：每次扫盘前，修改这里！
+    # =========================================================
+    # 1. 填入你要扫描的具体 Trial 文件夹路径 (绝对路径或相对路径)
+    # TARGET_FOLDER = "optuna_trial_records_mode4_ours_ITDD_20260422_205455"
+    TARGET_FOLDER="optuna_trial_records_mode4_ours_TongueDx_20260422_163433"
+    # 2. 告诉程序这个文件夹里装的是什么模型 (比如 "ours", "model_1", "resnet101" 等)
+    TARGET_VARIANT = "ours"
+    # =========================================================
 
-    run_tag_402 = "20260408_182017"
-    max_trials_per_model = 10
-    output_dir = "tonguedx_test"
+    # 自动根据标签数量判断数据集和标签后缀
+    num_labels = len(GLOBAL_LABELS)
+    if num_labels == 8:
+        test_data_path = "../dataset/test_data_juzhong.pth"
+        dataset_tag = "tonguedx"  # 保持与 mode2 命名习惯一致
+        print(f"\n[Mode 3] 🔍 检测到 8 个标签，自动挂载 TongueDx 测试集: {test_data_path}")
+    elif num_labels == 13:
+        test_data_path = "../dataset/shezhenv3_test_data.pth"
+        dataset_tag = "itdd"  # 保持与 mode2 命名习惯一致
+        print(f"\n[Mode 3] 🔍 检测到 13 个标签，自动挂载 ITDD 测试集: {test_data_path}")
+    else:
+        raise ValueError(f"[Mode 3] ❌ 未知的标签数量 {num_labels}，无法匹配测试集！")
+
+    # 创建输出主目录
+    output_dir = f"{dataset_tag}_scan_results"
+    os.makedirs(output_dir, exist_ok=True)
+
     model_configs = []
 
-    for i in range(1, 11):
-        variant = f"model_{i}"
-        trial_dir = f"optuna_trial_records_paper_{variant}_{run_tag_402}"
-        if not os.path.isdir(trial_dir):
-            continue
-        trial_ckpts = sorted(
-            [os.path.join(trial_dir, f) for f in os.listdir(trial_dir) if f.endswith(".pth")]
-        )[:max_trials_per_model]
-        for ckpt_path in trial_ckpts:
-            trial_name = os.path.splitext(os.path.basename(ckpt_path))[0]
-            model_configs.append(
-                Model_config(
-                    name=f"{variant}_tonguedx402_{trial_name}",
-                    variant=variant,
-                    weight_path=ckpt_path,
-                    json_path=None,
-                    labels=GLOBAL_LABELS,
-                    label_image=False,
-                    output_dir=output_dir,
-                )
+    if not os.path.isdir(TARGET_FOLDER):
+        print(f"\n[Mode 3] ❌ 找不到指定的文件夹: {TARGET_FOLDER}")
+        print("请检查 TARGET_FOLDER 路径是否正确！")
+        return model_configs, test_data_path
+
+    # 扫描文件夹下所有的 .pth 权重文件
+    trial_ckpts = sorted([os.path.join(TARGET_FOLDER, f) for f in os.listdir(TARGET_FOLDER) if f.endswith(".pth")])
+
+    if not trial_ckpts:
+        print(f"\n[Mode 3] ⚠️ 文件夹 {TARGET_FOLDER} 是空的，没有找到任何 .pth 文件！")
+        return model_configs, test_data_path
+
+    print(f"[Mode 3] ✅ 成功在 {TARGET_FOLDER} 中找到了 {len(trial_ckpts)} 个权重文件，准备扫盘！")
+
+    for ckpt_path in trial_ckpts:
+        # 提取去掉后缀的文件名，例如 "trial_0000_auc_0.782883"
+        trial_name = os.path.splitext(os.path.basename(ckpt_path))[0]
+
+        # 组合出严格对齐 Vue 解析逻辑的 task_name
+        # 最终会生成: test_results_{TARGET_VARIANT}_{dataset_tag}_{trial_name}.csv
+        task_name = f"{TARGET_VARIANT}_{dataset_tag}_{trial_name}"
+
+        model_configs.append(
+            Model_config(
+                name=task_name,
+                variant=TARGET_VARIANT,
+                weight_path=ckpt_path,
+                json_path=None,
+                labels=GLOBAL_LABELS,
+                label_image=False,
+                output_dir=output_dir,
             )
-    print(f"[config_mode3] 已装配测试任务数: {len(model_configs)}")
+        )
+
     return model_configs, test_data_path
 
 def config():
-    RUN_MODE = "mode2"  # 当前直接跑 100 次批量测试
+    RUN_MODE = "mode3"  # 当前直接跑 100 次批量测试
     if RUN_MODE == "mode1": return config_mode1()
     if RUN_MODE == "mode2": return config_mode2()
     if RUN_MODE == "mode3": return config_mode3()

@@ -1,0 +1,412 @@
+[
+    {
+        "id": 264,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/origin/test/1274_1.jpg",
+        "ground_truth": [
+            "Spot",
+            "FurThick",
+            "FurYellow"
+        ],
+        "baseline": {
+            "TonguePale": 0.5029069781303406,
+            "TipSideRed": 1.0,
+            "Spot": 0.9999927282333374,
+            "Ecchymosis": 1.0,
+            "Crack": 1.0,
+            "Toothmark": 0.9999580383300781,
+            "FurThick": 0.9874675869941711,
+            "FurYellow": 0.9999995231628418
+        },
+        "ours": {
+            "TonguePale": 0.9501635432243347,
+            "TipSideRed": 1.0,
+            "Spot": 0.9999960660934448,
+            "Ecchymosis": 0.5270153284072876,
+            "Crack": 1.0,
+            "Toothmark": 0.9102210402488708,
+            "FurThick": 1.0,
+            "FurYellow": 1.0
+        },
+        "primary_score": 3,
+        "secondary_score": 2,
+        "star_reasons": [
+            "基础达标(全胜): [Spot] Ours(1.00) > Base(1.00)",
+            "基础达标(全胜): [FurThick] Ours(1.00) > Base(0.99)",
+            "基础达标(全胜): [FurYellow] Ours(1.00) > Base(1.00)",
+            "辅助加分(抑制): [Ecchymosis] Base(1.00) -> Ours(0.53)",
+            "辅助加分(抑制): [Toothmark] Base(1.00) -> Ours(0.91)"
+        ]
+    },
+    {
+        "id": 221,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/origin/test/1075_1.jpg",
+        "ground_truth": [
+            "Spot",
+            "FurThick"
+        ],
+        "baseline": {
+            "TonguePale": 0.7705357670783997,
+            "TipSideRed": 1.0,
+            "Spot": 0.9988085031509399,
+            "Ecchymosis": 1.0,
+            "Crack": 1.0,
+            "Toothmark": 0.9966630339622498,
+            "FurThick": 0.9996504783630371,
+            "FurYellow": 0.9999879598617554
+        },
+        "ours": {
+            "TonguePale": 0.9503818154335022,
+            "TipSideRed": 0.9999997615814209,
+            "Spot": 0.9990971088409424,
+            "Ecchymosis": 0.09565142542123795,
+            "Crack": 1.0,
+            "Toothmark": 0.3557495176792145,
+            "FurThick": 1.0,
+            "FurYellow": 0.9999762773513794
+        },
+        "primary_score": 2,
+        "secondary_score": 4,
+        "star_reasons": [
+            "基础达标(全胜): [Spot] Ours(1.00) > Base(1.00)",
+            "基础达标(全胜): [FurThick] Ours(1.00) > Base(1.00)",
+            "辅助加分(抑制): [TipSideRed] Base(1.00) -> Ours(1.00)",
+            "辅助加分(抑制): [Ecchymosis] Base(1.00) -> Ours(0.10)",
+            "辅助加分(抑制): [Toothmark] Base(1.00) -> Ours(0.36)",
+            "辅助加分(抑制): [FurYellow] Base(1.00) -> Ours(1.00)"
+        ]
+    },
+    {
+        "id": 509,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/origin/test/2714_1.jpg",
+        "ground_truth": [
+            "FurThick"
+        ],
+        "baseline": {
+            "TonguePale": 0.9796997904777527,
+            "TipSideRed": 1.0,
+            "Spot": 0.9999996423721313,
+            "Ecchymosis": 1.0,
+            "Crack": 1.0,
+            "Toothmark": 0.9998987913131714,
+            "FurThick": 0.9996973276138306,
+            "FurYellow": 1.0
+        },
+        "ours": {
+            "TonguePale": 0.9260433316230774,
+            "TipSideRed": 1.0,
+            "Spot": 0.9997984766960144,
+            "Ecchymosis": 0.37897929549217224,
+            "Crack": 1.0,
+            "Toothmark": 0.6415902972221375,
+            "FurThick": 1.0,
+            "FurYellow": 0.9999996423721313
+        },
+        "primary_score": 1,
+        "secondary_score": 5,
+        "star_reasons": [
+            "基础达标(全胜): [FurThick] Ours(1.00) > Base(1.00)",
+            "辅助加分(抑制): [TonguePale] Base(0.98) -> Ours(0.93)",
+            "辅助加分(抑制): [Spot] Base(1.00) -> Ours(1.00)",
+            "辅助加分(抑制): [Ecchymosis] Base(1.00) -> Ours(0.38)",
+            "辅助加分(抑制): [Toothmark] Base(1.00) -> Ours(0.64)",
+            "辅助加分(抑制): [FurYellow] Base(1.00) -> Ours(1.00)"
+        ]
+    },
+    {
+        "id": 560,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/origin/test/2924_1.jpg",
+        "ground_truth": [
+            "FurThick"
+        ],
+        "baseline": {
+            "TonguePale": 0.9978196620941162,
+            "TipSideRed": 1.0,
+            "Spot": 0.9999852180480957,
+            "Ecchymosis": 1.0,
+            "Crack": 1.0,
+            "Toothmark": 0.9999034404754639,
+            "FurThick": 0.9995867609977722,
+            "FurYellow": 0.9999998807907104
+        },
+        "ours": {
+            "TonguePale": 0.9633243083953857,
+            "TipSideRed": 1.0,
+            "Spot": 0.9997242093086243,
+            "Ecchymosis": 0.3773318827152252,
+            "Crack": 1.0,
+            "Toothmark": 0.7739778757095337,
+            "FurThick": 1.0,
+            "FurYellow": 0.9999995231628418
+        },
+        "primary_score": 1,
+        "secondary_score": 5,
+        "star_reasons": [
+            "基础达标(全胜): [FurThick] Ours(1.00) > Base(1.00)",
+            "辅助加分(抑制): [TonguePale] Base(1.00) -> Ours(0.96)",
+            "辅助加分(抑制): [Spot] Base(1.00) -> Ours(1.00)",
+            "辅助加分(抑制): [Ecchymosis] Base(1.00) -> Ours(0.38)",
+            "辅助加分(抑制): [Toothmark] Base(1.00) -> Ours(0.77)",
+            "辅助加分(抑制): [FurYellow] Base(1.00) -> Ours(1.00)"
+        ]
+    },
+    {
+        "id": 846,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/origin/test/4422_1.jpg",
+        "ground_truth": [
+            "FurThick"
+        ],
+        "baseline": {
+            "TonguePale": 0.9976551532745361,
+            "TipSideRed": 1.0,
+            "Spot": 0.9999929666519165,
+            "Ecchymosis": 1.0,
+            "Crack": 1.0,
+            "Toothmark": 0.9999866485595703,
+            "FurThick": 0.9999558925628662,
+            "FurYellow": 0.9999998807907104
+        },
+        "ours": {
+            "TonguePale": 0.9534798264503479,
+            "TipSideRed": 1.0,
+            "Spot": 0.9994452595710754,
+            "Ecchymosis": 0.41341546177864075,
+            "Crack": 1.0,
+            "Toothmark": 0.5458594560623169,
+            "FurThick": 1.0,
+            "FurYellow": 0.9999961853027344
+        },
+        "primary_score": 1,
+        "secondary_score": 5,
+        "star_reasons": [
+            "基础达标(全胜): [FurThick] Ours(1.00) > Base(1.00)",
+            "辅助加分(抑制): [TonguePale] Base(1.00) -> Ours(0.95)",
+            "辅助加分(抑制): [Spot] Base(1.00) -> Ours(1.00)",
+            "辅助加分(抑制): [Ecchymosis] Base(1.00) -> Ours(0.41)",
+            "辅助加分(抑制): [Toothmark] Base(1.00) -> Ours(0.55)",
+            "辅助加分(抑制): [FurYellow] Base(1.00) -> Ours(1.00)"
+        ]
+    },
+    {
+        "id": 829,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/origin/test/4305_1.jpg",
+        "ground_truth": [
+            "FurThick"
+        ],
+        "baseline": {
+            "TonguePale": 0.7713937759399414,
+            "TipSideRed": 1.0,
+            "Spot": 1.0,
+            "Ecchymosis": 1.0,
+            "Crack": 1.0,
+            "Toothmark": 0.9999533891677856,
+            "FurThick": 0.9974283576011658,
+            "FurYellow": 1.0
+        },
+        "ours": {
+            "TonguePale": 0.932012677192688,
+            "TipSideRed": 1.0,
+            "Spot": 0.9998797178268433,
+            "Ecchymosis": 0.5560882091522217,
+            "Crack": 1.0,
+            "Toothmark": 0.8298527598381042,
+            "FurThick": 1.0,
+            "FurYellow": 0.9999995231628418
+        },
+        "primary_score": 1,
+        "secondary_score": 4,
+        "star_reasons": [
+            "基础达标(全胜): [FurThick] Ours(1.00) > Base(1.00)",
+            "辅助加分(抑制): [Spot] Base(1.00) -> Ours(1.00)",
+            "辅助加分(抑制): [Ecchymosis] Base(1.00) -> Ours(0.56)",
+            "辅助加分(抑制): [Toothmark] Base(1.00) -> Ours(0.83)",
+            "辅助加分(抑制): [FurYellow] Base(1.00) -> Ours(1.00)"
+        ]
+    },
+    {
+        "id": 885,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/origin/test/4598_1.jpg",
+        "ground_truth": [
+            "FurThick"
+        ],
+        "baseline": {
+            "TonguePale": 0.9754519462585449,
+            "TipSideRed": 1.0,
+            "Spot": 1.0,
+            "Ecchymosis": 1.0,
+            "Crack": 1.0,
+            "Toothmark": 0.9999961853027344,
+            "FurThick": 0.997271716594696,
+            "FurYellow": 1.0
+        },
+        "ours": {
+            "TonguePale": 0.9486440420150757,
+            "TipSideRed": 1.0,
+            "Spot": 0.9999816417694092,
+            "Ecchymosis": 0.5572112798690796,
+            "Crack": 1.0,
+            "Toothmark": 0.943314254283905,
+            "FurThick": 1.0,
+            "FurYellow": 1.0
+        },
+        "primary_score": 1,
+        "secondary_score": 4,
+        "star_reasons": [
+            "基础达标(全胜): [FurThick] Ours(1.00) > Base(1.00)",
+            "辅助加分(抑制): [TonguePale] Base(0.98) -> Ours(0.95)",
+            "辅助加分(抑制): [Spot] Base(1.00) -> Ours(1.00)",
+            "辅助加分(抑制): [Ecchymosis] Base(1.00) -> Ours(0.56)",
+            "辅助加分(抑制): [Toothmark] Base(1.00) -> Ours(0.94)"
+        ]
+    },
+    {
+        "id": 83,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/origin/test/472_1.jpg",
+        "ground_truth": [
+            "FurThick"
+        ],
+        "baseline": {
+            "TonguePale": 1.3836553080182057e-05,
+            "TipSideRed": 1.0,
+            "Spot": 1.0,
+            "Ecchymosis": 1.0,
+            "Crack": 1.0,
+            "Toothmark": 0.9998444318771362,
+            "FurThick": 0.08407324552536011,
+            "FurYellow": 1.0
+        },
+        "ours": {
+            "TonguePale": 0.9878684282302856,
+            "TipSideRed": 1.0,
+            "Spot": 0.9999984502792358,
+            "Ecchymosis": 0.5548223257064819,
+            "Crack": 1.0,
+            "Toothmark": 0.6942737698554993,
+            "FurThick": 1.0,
+            "FurYellow": 1.0
+        },
+        "primary_score": 1,
+        "secondary_score": 3,
+        "star_reasons": [
+            "基础达标(全胜): [FurThick] Ours(1.00) > Base(0.08)",
+            "辅助加分(抑制): [Spot] Base(1.00) -> Ours(1.00)",
+            "辅助加分(抑制): [Ecchymosis] Base(1.00) -> Ours(0.55)",
+            "辅助加分(抑制): [Toothmark] Base(1.00) -> Ours(0.69)"
+        ]
+    },
+    {
+        "id": 175,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/origin/test/909_1.jpg",
+        "ground_truth": [
+            "FurThick"
+        ],
+        "baseline": {
+            "TonguePale": 0.6022799611091614,
+            "TipSideRed": 1.0,
+            "Spot": 1.0,
+            "Ecchymosis": 1.0,
+            "Crack": 1.0,
+            "Toothmark": 0.9999983310699463,
+            "FurThick": 0.9472546577453613,
+            "FurYellow": 1.0
+        },
+        "ours": {
+            "TonguePale": 0.9132903814315796,
+            "TipSideRed": 1.0,
+            "Spot": 0.9999992847442627,
+            "Ecchymosis": 0.829811155796051,
+            "Crack": 1.0,
+            "Toothmark": 0.9672634601593018,
+            "FurThick": 1.0,
+            "FurYellow": 1.0
+        },
+        "primary_score": 1,
+        "secondary_score": 3,
+        "star_reasons": [
+            "基础达标(全胜): [FurThick] Ours(1.00) > Base(0.95)",
+            "辅助加分(抑制): [Spot] Base(1.00) -> Ours(1.00)",
+            "辅助加分(抑制): [Ecchymosis] Base(1.00) -> Ours(0.83)",
+            "辅助加分(抑制): [Toothmark] Base(1.00) -> Ours(0.97)"
+        ]
+    },
+    {
+        "id": 474,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/origin/test/2540_1.jpg",
+        "ground_truth": [
+            "FurThick"
+        ],
+        "baseline": {
+            "TonguePale": 0.869392991065979,
+            "TipSideRed": 1.0,
+            "Spot": 1.0,
+            "Ecchymosis": 1.0,
+            "Crack": 1.0,
+            "Toothmark": 0.999992847442627,
+            "FurThick": 0.9967467784881592,
+            "FurYellow": 1.0
+        },
+        "ours": {
+            "TonguePale": 0.9389214515686035,
+            "TipSideRed": 1.0,
+            "Spot": 0.9999946355819702,
+            "Ecchymosis": 0.5861719250679016,
+            "Crack": 1.0,
+            "Toothmark": 0.9054572582244873,
+            "FurThick": 1.0,
+            "FurYellow": 1.0
+        },
+        "primary_score": 1,
+        "secondary_score": 3,
+        "star_reasons": [
+            "基础达标(全胜): [FurThick] Ours(1.00) > Base(1.00)",
+            "辅助加分(抑制): [Spot] Base(1.00) -> Ours(1.00)",
+            "辅助加分(抑制): [Ecchymosis] Base(1.00) -> Ours(0.59)",
+            "辅助加分(抑制): [Toothmark] Base(1.00) -> Ours(0.91)"
+        ]
+    },
+    {
+        "id": 486,
+        "dataset": "TongueDx",
+        "image": "../../a_TongueDx2/origin/test/2609_1.jpg",
+        "ground_truth": [
+            "FurThick"
+        ],
+        "baseline": {
+            "TonguePale": 0.7802585363388062,
+            "TipSideRed": 1.0,
+            "Spot": 1.0,
+            "Ecchymosis": 1.0,
+            "Crack": 1.0,
+            "Toothmark": 0.9999862909317017,
+            "FurThick": 0.9995434880256653,
+            "FurYellow": 1.0
+        },
+        "ours": {
+            "TonguePale": 0.9432463645935059,
+            "TipSideRed": 1.0,
+            "Spot": 0.9999867677688599,
+            "Ecchymosis": 0.8845048546791077,
+            "Crack": 1.0,
+            "Toothmark": 0.8317254185676575,
+            "FurThick": 1.0,
+            "FurYellow": 1.0
+        },
+        "primary_score": 1,
+        "secondary_score": 3,
+        "star_reasons": [
+            "基础达标(全胜): [FurThick] Ours(1.00) > Base(1.00)",
+            "辅助加分(抑制): [Spot] Base(1.00) -> Ours(1.00)",
+            "辅助加分(抑制): [Ecchymosis] Base(1.00) -> Ours(0.88)",
+            "辅助加分(抑制): [Toothmark] Base(1.00) -> Ours(0.83)"
+        ]
+    }
+]

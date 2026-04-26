@@ -4,7 +4,9 @@ import torch.nn.functional as F
 
 import torch
 import torch.nn as nn
-
+import os
+import torch
+import torch.nn as nn
 
 class HybridMultiLabelHead_HP(nn.Module):
     """
@@ -35,7 +37,22 @@ class HybridMultiLabelHead_HP(nn.Module):
         self.image_fc1 = nn.Linear(2048, self.intermediate_dim)
         self.image_dropout = nn.Dropout(self.dropout_rate)
         self.image_fc2 = nn.Linear(self.intermediate_dim, self.num_classes)
-
+        #
+        # # ---------------- 语义融合特征支路 (Fusion Branch) ----------------
+        # self.fusion_input_dim = self.num_classes * 512
+        # self.fusion_bn = nn.BatchNorm1d(self.fusion_input_dim)
+        # self.fusion_fc1 = nn.Linear(self.fusion_input_dim, self.intermediate_dim)
+        # self.fusion_dropout = nn.Dropout(self.dropout_rate)
+        # self.fusion_fc2 = nn.Linear(self.intermediate_dim, self.num_classes)
+        #
+        # # ---------------- 核心创新组件 ----------------
+        # # 标签相关性矩阵 M (Correlation Matrix)
+        # self.correlation_matrix = nn.Parameter(torch.eye(self.num_classes))
+        #
+        # # 自适应门控权重 Alpha (Adaptive Gating)
+        # # self.alpha = nn.Parameter(torch.zeros(self.num_classes))
+        # # 修复后的版本（标量，完美匹配你 .pth 里的 torch.Size([])）：
+        # self.alpha = nn.Parameter(torch.tensor(0.0))
         # ---------------- 语义融合特征支路 (Fusion Branch) ----------------
         self.fusion_input_dim = self.num_classes * 512
         self.fusion_bn = nn.BatchNorm1d(self.fusion_input_dim)
@@ -45,11 +62,30 @@ class HybridMultiLabelHead_HP(nn.Module):
 
         # ---------------- 核心创新组件 ----------------
         # 标签相关性矩阵 M (Correlation Matrix)
-        self.correlation_matrix = nn.Parameter(torch.eye(self.num_classes))
+        # 💡 根据类别数量自动分配先验矩阵路径
+        if self.num_classes == 8:
+            adj_path = "../dataset/tonguedx_adjacency_matrix.pth"
+            dataset_name = "TongueDx"
+        elif self.num_classes == 13:
+            adj_path = "../dataset/itdd_adjacency_matrix.pth"
+            dataset_name = "ITDD"
+        else:
+            adj_path = None
+            dataset_name = "Unknown"
+
+        # 尝试加载真实的先验矩阵
+        if adj_path and os.path.exists(adj_path):
+            print(f"🔥 检测到 {dataset_name} 先验标签共现矩阵，正在加载: {adj_path}")
+            adj_tensor = torch.load(adj_path, map_location='cpu')
+            # 确保维度对齐
+            if adj_tensor.shape[0] > self.num_classes:
+                adj_tensor = adj_tensor[:self.num_classes, :self.num_classes]
+            self.correlation_matrix = nn.Parameter(adj_tensor.float())
+        else:
+            print(f"⚠️ 未找到对应 {dataset_name} 的先验矩阵或路径错误，退化为单位阵(Identity Matrix)初始化")
+            self.correlation_matrix = nn.Parameter(torch.eye(self.num_classes))
 
         # 自适应门控权重 Alpha (Adaptive Gating)
-        # self.alpha = nn.Parameter(torch.zeros(self.num_classes))
-        # 修复后的版本（标量，完美匹配你 .pth 里的 torch.Size([])）：
         self.alpha = nn.Parameter(torch.tensor(0.0))
     def forward(self, image_feature: torch.Tensor, fusion_feature: torch.Tensor,
                 use_matrix: bool = True) -> torch.Tensor:
